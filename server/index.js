@@ -40,7 +40,7 @@ app.post("/play", (req, res) => {
 });
 
 // ======================
-// FRONTEND
+// FRONTEND (LOBBY + GAME)
 // ======================
 app.get("/", (req, res) => {
   res.send(`
@@ -59,23 +59,37 @@ body {
   text-align: center;
 }
 
+/* HEADER */
 h1 {
   color: #ff004c;
-  margin-top: 30px;
+  margin-top: 20px;
 }
+
+/* LOBBY CARDS */
+.card {
+  background: #111;
+  margin: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+/* BUTTONS */
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+  background: #00d4ff;
+  border: none;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* GAME */
+.hidden { display: none; }
 
 .reels {
   font-size: 50px;
   margin-top: 30px;
-}
-
-button {
-  padding: 15px 30px;
-  font-size: 20px;
-  background: #00d4ff;
-  border: none;
-  border-radius: 10px;
-  margin-top: 20px;
 }
 
 .win {
@@ -93,16 +107,48 @@ button {
 <body>
 
 <h1>🎰 KWM Casino</h1>
-<p>Neon Rodeo</p>
 
-<div class="reels" id="reels">🎰 🎰 🎰</div>
+<!-- ================= LOBBY ================= -->
+<div id="lobby">
+  <div class="card">
+    <h2>🎰 Neon Rodeo Slots</h2>
+    <p>Classic 3-reel slot machine</p>
+    <button onclick="openGame()">Play</button>
+  </div>
 
-<button onclick="spin()">SPIN</button>
+  <div class="card">
+    <h2>🔥 Fire Bonus Wheel</h2>
+    <p>Coming soon</p>
+    <button disabled>Locked</button>
+  </div>
+</div>
 
-<div class="win" id="win"></div>
-<div class="bonus" id="bonus"></div>
+<!-- ================= GAME ================= -->
+<div id="game" class="hidden">
+  <h2>🎰 Neon Rodeo</h2>
+
+  <div class="reels" id="reels">🎰 🎰 🎰</div>
+
+  <button onclick="spin()">SPIN</button>
+
+  <div class="win" id="win"></div>
+  <div class="bonus" id="bonus"></div>
+
+  <br>
+  <button onclick="back()">← Back to Lobby</button>
+</div>
 
 <script>
+function openGame() {
+  document.getElementById("lobby").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+}
+
+function back() {
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("lobby").classList.remove("hidden");
+}
+
 async function spin() {
   const reelsEl = document.getElementById("reels");
   const winEl = document.getElementById("win");
