@@ -104,7 +104,8 @@ app.post("/huffpuff", (req, res) => {
 // FRONTEND (LOBBY + MODERN UI)
 // ======================
 app.get("/", (req, res) => {
-  res.send(`
+  res.sendFile(path.join(__dirname, "../client/index.html"));
+});
 <!DOCTYPE html>
 <html>
 <head>
