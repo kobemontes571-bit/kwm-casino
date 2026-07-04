@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 // ======================
-// SLOT ENGINE
+// SLOT ENGINE (NEON RODEO)
 // ======================
 const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
 
@@ -29,8 +29,10 @@ function checkBonus(reels) {
 }
 
 // ======================
-// API
+// GAME ROUTES
 // ======================
+
+// Neon Rodeo
 app.post("/play", (req, res) => {
   const reels = spinReels();
   const win = checkWin(reels);
@@ -39,8 +41,28 @@ app.post("/play", (req, res) => {
   res.json({ reels, win, bonus });
 });
 
+// Fire Link (basic prototype)
+app.post("/firelink", (req, res) => {
+  const reels = ["🔥","🔥","🔥"];
+  res.json({
+    reels,
+    win: 100,
+    bonus: { freeSpins: true, wheelBonus: true }
+  });
+});
+
+// Huff & Puff (basic prototype)
+app.post("/huffpuff", (req, res) => {
+  const reels = ["🐷","🏠","💨"];
+  res.json({
+    reels,
+    win: 25,
+    bonus: { freeSpins: true, wheelBonus: false }
+  });
+});
+
 // ======================
-// FRONTEND (LOBBY + GAME)
+// FRONTEND (MODERN LOBBY STYLE)
 // ======================
 app.get("/", (req, res) => {
   res.send(`
@@ -53,53 +75,66 @@ app.get("/", (req, res) => {
 <style>
 body {
   margin: 0;
-  font-family: Arial;
-  background: #0b0f1a;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #1b1f3a, #0b0f1a);
   color: white;
   text-align: center;
 }
 
 /* HEADER */
 h1 {
-  color: #ff004c;
-  margin-top: 20px;
+  margin: 20px;
+  color: #ff3b6b;
 }
 
-/* LOBBY CARDS */
-.card {
-  background: #111;
-  margin: 15px;
+/* LOBBY GRID */
+.lobby {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
   padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #333;
 }
 
-/* BUTTONS */
+/* GAME CARD */
+.card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 15px;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  border-color: #00d4ff;
+}
+
+/* BUTTON */
 button {
-  padding: 12px 20px;
-  font-size: 16px;
-  background: #00d4ff;
+  width: 100%;
+  padding: 10px;
   border: none;
   border-radius: 10px;
   margin-top: 10px;
+  background: linear-gradient(90deg, #00d4ff, #7c4dff);
+  color: white;
+  font-weight: bold;
 }
 
-/* GAME */
+/* GAME AREA */
 .hidden { display: none; }
 
 .reels {
-  font-size: 50px;
-  margin-top: 30px;
+  font-size: 55px;
+  margin: 30px 0;
 }
 
 .win {
-  margin-top: 20px;
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .bonus {
   color: gold;
-  margin-top: 10px;
 }
 </style>
 </head>
@@ -109,23 +144,31 @@ button {
 <h1>🎰 KWM Casino</h1>
 
 <!-- ================= LOBBY ================= -->
-<div id="lobby">
+<div id="lobby" class="lobby">
+
   <div class="card">
-    <h2>🎰 Neon Rodeo Slots</h2>
-    <p>Classic 3-reel slot machine</p>
-    <button onclick="openGame()">Play</button>
+    <h3>🎰 Neon Rodeo</h3>
+    <p>Classic slot machine</p>
+    <button onclick="openGame('play')">Play</button>
   </div>
 
   <div class="card">
-    <h2>🔥 Fire Bonus Wheel</h2>
-    <p>Coming soon</p>
-    <button disabled>Locked</button>
+    <h3>🔥 Fire Link</h3>
+    <p>Bonus fire game</p>
+    <button onclick="openGame('firelink')">Play</button>
   </div>
+
+  <div class="card">
+    <h3>🐷 Huff & Puff</h3>
+    <p>Bonus building slot</p>
+    <button onclick="openGame('huffpuff')">Play</button>
+  </div>
+
 </div>
 
 <!-- ================= GAME ================= -->
 <div id="game" class="hidden">
-  <h2>🎰 Neon Rodeo</h2>
+  <h2 id="title"></h2>
 
   <div class="reels" id="reels">🎰 🎰 🎰</div>
 
@@ -134,14 +177,25 @@ button {
   <div class="win" id="win"></div>
   <div class="bonus" id="bonus"></div>
 
-  <br>
-  <button onclick="back()">← Back to Lobby</button>
+  <br><br>
+  <button onclick="back()">← Back</button>
 </div>
 
 <script>
-function openGame() {
+let currentGame = "play";
+
+function openGame(game) {
+  currentGame = game;
   document.getElementById("lobby").classList.add("hidden");
   document.getElementById("game").classList.remove("hidden");
+
+  const titles = {
+    play: "🎰 Neon Rodeo",
+    firelink: "🔥 Fire Link",
+    huffpuff: "🐷 Huff & Puff"
+  };
+
+  document.getElementById("title").innerText = titles[game];
 }
 
 function back() {
@@ -150,24 +204,19 @@ function back() {
 }
 
 async function spin() {
-  const reelsEl = document.getElementById("reels");
-  const winEl = document.getElementById("win");
-  const bonusEl = document.getElementById("bonus");
-
-  winEl.innerText = "Spinning...";
-  bonusEl.innerText = "";
-
-  const res = await fetch('/play', { method: 'POST' });
+  const res = await fetch('/' + currentGame, { method: 'POST' });
   const data = await res.json();
 
-  reelsEl.innerText = data.reels.join(" ");
-
-  winEl.innerText = data.win > 0 ? "WIN: " + data.win : "No Win";
+  document.getElementById("reels").innerText = data.reels.join(" ");
+  document.getElementById("win").innerText =
+    data.win > 0 ? "WIN: " + data.win : "No Win";
 
   if (data.bonus.freeSpins) {
-    bonusEl.innerText = "🔥 FREE SPINS!";
+    document.getElementById("bonus").innerText = "🔥 FREE SPINS!";
   } else if (data.bonus.wheelBonus) {
-    bonusEl.innerText = "🎡 BONUS!";
+    document.getElementById("bonus").innerText = "🎡 BONUS!";
+  } else {
+    document.getElementById("bonus").innerText = "";
   }
 }
 </script>
