@@ -9,16 +9,131 @@ app.get("/", (req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>KWM Casino</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #0b0f1a;
-      color: white;
-      text-align: center;
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KWM Casino</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0b0f1a;
+  color:white;
+  text-align:center;
+}
+
+.header {
+  font-size:40px;
+  color:#ff004c;
+  margin-top:20px;
+}
+
+.card {
+  background:#111;
+  margin:20px;
+  padding:20px;
+  border-radius:12px;
+  border:1px solid #333;
+}
+
+button {
+  padding:12px 20px;
+  background:#00d4ff;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  margin-top:10px;
+}
+
+.hidden { display:none; }
+
+.reels { font-size:40px; margin:20px; }
+</style>
+</head>
+
+<body>
+
+<div class="header">🎰 KWM Casino</div>
+<p>Neon Texas Edition</p>
+
+<!-- LOBBY -->
+<div id="lobby">
+  <div class="card">
+    <h2>🎰 Neon Rodeo</h2>
+    <p>Classic slot machine</p>
+    <button onclick="openGame()">Play</button>
+  </div>
+
+  <div class="card">
+    <h2>🔥 Coming Soon</h2>
+    <p>More games arriving</p>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="hidden">
+  <div class="reels" id="reels">🎰 🎰 🎰</div>
+
+  <button onclick="spin()">SPIN</button>
+
+  <div id="win"></div>
+  <div id="bonus"></div>
+
+  <button onclick="back()">← Back</button>
+</div>
+
+<script>
+function openGame() {
+  document.getElementById("lobby").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+}
+
+function back() {
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("lobby").classList.remove("hidden");
+}
+
+async function spin() {
+  const reelsEl = document.getElementById("reels");
+  const winEl = document.getElementById("win");
+  const bonusEl = document.getElementById("bonus");
+
+  winEl.innerText = "Spinning...";
+  bonusEl.innerText = "";
+
+  const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
+
+  let interval = setInterval(() => {
+    reelsEl.innerText = [
+      symbols[Math.floor(Math.random()*symbols.length)],
+      symbols[Math.floor(Math.random()*symbols.length)],
+      symbols[Math.floor(Math.random()*symbols.length)]
+    ].join(" ");
+  }, 80);
+
+  setTimeout(async () => {
+    clearInterval(interval);
+
+    const res = await fetch('/play', { method: 'POST' });
+    const data = await res.json();
+
+    reelsEl.innerText = data.reels.join(" ");
+
+    winEl.innerText = data.win > 0 ? "WIN: " + data.win : "No Win";
+
+    if (data.bonus.freeSpins) {
+      bonusEl.innerText = "🔥 FREE SPINS!";
+    } else if (data.bonus.wheelBonus) {
+      bonusEl.innerText = "🎡 BONUS!";
     }
+
+  }, 1200);
+}
+</script>
+
+</body>
+</html>
+  `);
+});
     h1 { color: #ff004c; margin-top: 30px; }
     button {
       padding: 15px 30px;
