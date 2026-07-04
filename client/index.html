@@ -1,91 +1,76 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>KWM Casino</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+let currentGame = "play";
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #0b0f1a;
-      color: white;
-      text-align: center;
-    }
+function openGame(game) {
+  currentGame = game;
 
-    .title {
-      font-size: 40px;
-      color: #ff004c;
-      margin-top: 20px;
-    }
+  document.getElementById("lobby").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
 
-    .card {
-      margin: 20px;
-      padding: 20px;
-      border: 1px solid #333;
-      border-radius: 10px;
-    }
+  const titles = {
+    play: "🎰 Neon Rodeo",
+    firelink: "🔥 Fire Link",
+    huffpuff: "🐂 Huff & Puff"
+  };
 
-    button {
-      padding: 15px 30px;
-      font-size: 18px;
-      background: #00d4ff;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
+  document.getElementById("title").innerText = titles[game];
+}
 
-    .reels {
-      font-size: 40px;
-      margin: 20px;
-    }
-
-    .bonus {
-      color: #ffd700;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="title">🎰 KWM Casino</div>
-  <p>Neon Texas Edition</p>
-
-  <div class="card">
-    <h2>🎰 Neon Rodeo</h2>
-
-    <div class="reels" id="reels">- - -</div>
-
-    <button onclick="spin()">SPIN</button>
-
-    <h3 id="win"></h3>
-    <div class="bonus" id="bonus"></div>
-  </div>
-
-<script>
-const API_URL = "https://kwm-casino.onrender.com";
+function back() {
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("lobby").classList.remove("hidden");
+}
 
 async function spin() {
-  document.getElementById("win").innerText = "Spinning...";
-  document.getElementById("bonus").innerText = "";
+  const reelsEl = document.getElementById("reels");
+  const winEl = document.getElementById("win");
+  const bonusEl = document.getElementById("bonus");
 
-  const res = await fetch(API_URL, {
-    method: "POST"
-  });
+  try {
+    winEl.innerText = "Spinning...";
+    bonusEl.innerText = "";
 
-  const data = await res.json();
+    // fake spin animation
+    const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
 
-  document.getElementById("reels").innerText = data.reels.join(" ");
-  document.getElementById("win").innerText = "Win: " + data.win;
+    let interval = setInterval(() => {
+      reelsEl.innerHTML = Array.from({ length: 3 }, () =>
+        Array.from({ length: 5 }, () =>
+          symbols[Math.floor(Math.random() * symbols.length)]
+        ).join(" ")
+      ).join("<br>");
+    }, 60);
 
-  if (data.bonus.freeSpins) {
-    document.getElementById("bonus").innerText = "🔥 FREE SPINS TRIGGERED!";
-  } else if (data.bonus.wheelBonus) {
-    document.getElementById("bonus").innerText = "🎡 WHEEL BONUS!";
+    const res = await fetch("/" + currentGame, {
+      method: "POST"
+    });
+
+    if (!res.ok) {
+      throw new Error("Server error: " + res.status);
+    }
+
+    const data = await res.json();
+
+    clearInterval(interval);
+
+    // render final grid safely
+    reelsEl.innerHTML = (data.reels || [])
+      .map(row => row.join(" "))
+      .join("<br>");
+
+    winEl.innerText =
+      data.win > 0 ? "WIN: " + data.win : "No Win";
+
+    if (data.bonus?.freeSpins) {
+      bonusEl.innerText = "🔥 FREE SPINS!";
+    } else if (data.bonus?.wheelBonus) {
+      bonusEl.innerText = "🎡 BONUS!";
+    } else {
+      bonusEl.innerText = "";
+    }
+
+  } catch (err) {
+    console.error(err);
+    winEl.innerText = "Spin failed (check server)";
+    bonusEl.innerText = "";
   }
 }
-</script>
-
-</body>
-</html>
