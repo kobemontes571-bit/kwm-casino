@@ -47,40 +47,55 @@ app.get("/", (req, res) => {
 
 <script>
 async function spin() {
-  document.getElementById("win").innerText = "Spinning...";
-  document.getElementById("bonus").innerText = "";
-  document.getElementById("reels").innerText = "🎰 🎰 🎰";
+  const reelsEl = document.getElementById("reels");
+  const winEl = document.getElementById("win");
+  const bonusEl = document.getElementById("bonus");
 
-  await new Promise(r => setTimeout(r, 800));
+  winEl.innerText = "Spinning...";
+  bonusEl.innerText = "";
 
-  const res = await fetch('/play', { method: 'POST' });
-  const data = await res.json();
+  // fake reel animation
+  const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
 
-  let frames = ["🎰 🎰 🎰", "⭐ 🔥 💎", "7 🔔 ⭐"];
-  let i = 0;
+  let spinCount = 0;
 
   let interval = setInterval(() => {
-    document.getElementById("reels").innerText = frames[i % frames.length];
-    i++;
-  }, 100);
+    reelsEl.innerText = [
+      symbols[Math.floor(Math.random()*symbols.length)],
+      symbols[Math.floor(Math.random()*symbols.length)],
+      symbols[Math.floor(Math.random()*symbols.length)]
+    ].join(" ");
+  }, 80);
 
-  setTimeout(() => {
+  // stop reels after delay
+  setTimeout(async () => {
     clearInterval(interval);
 
-    document.getElementById("reels").innerText = data.reels.join(" ");
+    const res = await fetch('/play', { method: 'POST' });
+    const data = await res.json();
 
-    document.getElementById("win").innerText =
-      data.win > 0 ? "WIN: " + data.win : "No Win";
+    // slow reveal effect
+    reelsEl.innerText = "🎰";
+    await new Promise(r => setTimeout(r, 400));
 
-    if (data.bonus.freeSpins) {
-      document.getElementById("bonus").innerText = "🔥 FREE SPINS TRIGGERED!";
-    } else if (data.bonus.wheelBonus) {
-      document.getElementById("bonus").innerText = "🎡 WHEEL BONUS!";
+    reelsEl.innerText = data.reels.join(" ");
+
+    if (data.win > 0) {
+      winEl.innerText = "🔥 BIG WIN: " + data.win;
+      document.body.style.background = "#1a0b0b";
+      setTimeout(() => document.body.style.background = "#0b0f1a", 600);
+    } else {
+      winEl.innerText = "No Win";
     }
 
-  }, 900);
+    if (data.bonus.freeSpins) {
+      bonusEl.innerText = "🔥 FREE SPINS MODE!";
+    } else if (data.bonus.wheelBonus) {
+      bonusEl.innerText = "🎡 WHEEL BONUS TRIGGERED!";
+    }
+
+  }, 1200);
 }
-</script>
 
 </body>
 </html>
