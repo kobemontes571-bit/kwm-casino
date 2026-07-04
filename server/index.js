@@ -1,40 +1,13 @@
 const express = require("express");
 const app = express();
 
-app.use(express.json());
+app.get("/", (req, res) => {
+  res.send("KWM Casino is running");
+});
 
-// ======================
-// SLOT ENGINE
-// ======================
-const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
-
-function spinReels() {
-  return [
-    symbols[Math.floor(Math.random() * symbols.length)],
-    symbols[Math.floor(Math.random() * symbols.length)],
-    symbols[Math.floor(Math.random() * symbols.length)]
-  ];
-}
-
-function checkWin(reels) {
-  return (reels[0] === reels[1] && reels[1] === reels[2]) ? 50 : 0;
-}
-
-function checkBonus(reels) {
-  const fire = reels.filter(s => s === "🔥").length;
-  return {
-    freeSpins: fire >= 2,
-    wheelBonus: fire >= 1
-  };
-}
-
-// ======================
-// API
-// ======================
-app.post("/play", (req, res) => {
-  const reels = spinReels();
-  const win = checkWin(reels);
-  const bonus = checkBonus(reels);
+app.listen(3000, () => {
+  console.log("running");
+});  const bonus = checkBonus(reels);
 
   res.json({ reels, win, bonus });
 });
