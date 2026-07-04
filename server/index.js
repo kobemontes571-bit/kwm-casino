@@ -231,6 +231,60 @@ async function spin() {
   const data = await res.json();
 
   const reelsEl = document.getElementById("reels");
+  const winEl = document.getElementById("win");
+  const bonusEl = document.getElementById("bonus");
+
+  winEl.innerText = "Spinning...";
+  bonusEl.innerText = "";
+
+  // 🎰 START SPIN EFFECT
+  reelsEl.classList.add("spinning");
+
+  const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
+
+  // fake spinning animation
+  let interval = setInterval(() => {
+    reelsEl.innerHTML = Array.from({ length: 3 }, () =>
+      Array.from({ length: 5 }, () =>
+        symbols[Math.floor(Math.random() * symbols.length)]
+      ).join(" ")
+    ).join("<br>");
+  }, 60);
+
+  // 🎯 STOP AFTER DELAY
+  setTimeout(() => {
+    clearInterval(interval);
+
+    reelsEl.classList.remove("spinning");
+
+    // show real result
+    reelsEl.innerHTML = data.reels
+      .map(row => row.join(" "))
+      .join("<br>");
+
+    if (data.win > 0) {
+      winEl.innerText = "WIN: " + data.win;
+      reelsEl.classList.add("winFlash");
+
+      setTimeout(() => {
+        reelsEl.classList.remove("winFlash");
+      }, 400);
+    } else {
+      winEl.innerText = "No Win";
+    }
+
+    if (data.bonus.freeSpins) {
+      bonusEl.innerText = "🔥 FREE SPINS!";
+    } else if (data.bonus.wheelBonus) {
+      bonusEl.innerText = "🎡 BONUS!";
+    } else {
+      bonusEl.innerText = "";
+    }
+
+  }, 1400);
+}
+
+  const reelsEl = document.getElementById("reels");
 
   // GRID RENDER
   reelsEl.innerHTML = data.reels
