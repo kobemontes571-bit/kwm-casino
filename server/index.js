@@ -4,35 +4,57 @@ const app = express();
 app.use(express.json());
 
 // ======================
-// SLOT ENGINE (NEON RODEO)
+// SYMBOLS
 // ======================
 const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
 
+// ======================
+// SLOT ENGINE (5x3 GRID)
+// ======================
 function spinReels() {
-  return [
-    symbols[Math.floor(Math.random() * symbols.length)],
-    symbols[Math.floor(Math.random() * symbols.length)],
-    symbols[Math.floor(Math.random() * symbols.length)]
-  ];
+  const grid = [];
+
+  for (let row = 0; row < 3; row++) {
+    const line = [];
+    for (let col = 0; col < 5; col++) {
+      line.push(symbols[Math.floor(Math.random() * symbols.length)]);
+    }
+    grid.push(line);
+  }
+
+  return grid;
 }
 
-function checkWin(reels) {
-  return (reels[0] === reels[1] && reels[1] === reels[2]) ? 50 : 0;
+// ======================
+// WIN SYSTEM
+// ======================
+function checkWin(grid) {
+  const middle = grid[1];
+  const first = middle[0];
+
+  if (middle.every(s => s === first)) {
+    return 50;
+  }
+
+  return 0;
 }
 
-function checkBonus(reels) {
-  const fire = reels.filter(s => s === "🔥").length;
+// ======================
+// BONUS SYSTEM
+// ======================
+function checkBonus(grid) {
+  const flat = grid.flat();
+  const fire = flat.filter(s => s === "🔥").length;
+
   return {
-    freeSpins: fire >= 2,
-    wheelBonus: fire >= 1
+    freeSpins: fire >= 4,
+    wheelBonus: fire >= 2
   };
 }
 
 // ======================
-// GAME ROUTES
+// NEON RODEO
 // ======================
-
-// Neon Rodeo
 app.post("/play", (req, res) => {
   const reels = spinReels();
   const win = checkWin(reels);
@@ -41,28 +63,42 @@ app.post("/play", (req, res) => {
   res.json({ reels, win, bonus });
 });
 
-// Fire Link (basic prototype)
+// ======================
+// FIRE LINK (REAL STRUCTURE)
+// ======================
 app.post("/firelink", (req, res) => {
-  const reels = ["🔥","🔥","🔥"];
-  res.json({
-    reels,
-    win: 100,
-    bonus: { freeSpins: true, wheelBonus: true }
-  });
-});
+  const reels = spinReels();
+  const fireCount = reels.flat().filter(s => s === "🔥").length;
 
-// Huff & Puff (basic prototype)
-app.post("/huffpuff", (req, res) => {
-  const reels = ["🐷","🏠","💨"];
   res.json({
     reels,
-    win: 25,
-    bonus: { freeSpins: true, wheelBonus: false }
+    win: fireCount * 20,
+    bonus: {
+      freeSpins: fireCount >= 5,
+      wheelBonus: fireCount >= 3
+    }
   });
 });
 
 // ======================
-// FRONTEND (MODERN LOBBY STYLE)
+// HUFF & PUFF (REAL STRUCTURE)
+// ======================
+app.post("/huffpuff", (req, res) => {
+  const reels = spinReels();
+  const build = reels.flat().filter(s => s === "🐂").length;
+
+  res.json({
+    reels,
+    win: build * 15,
+    bonus: {
+      freeSpins: build >= 4,
+      wheelBonus: build >= 2
+    }
+  });
+});
+
+// ======================
+// FRONTEND (LOBBY + MODERN UI)
 // ======================
 app.get("/", (req, res) => {
   res.send(`
@@ -75,19 +111,17 @@ app.get("/", (req, res) => {
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: radial-gradient(circle at top, #1b1f3a, #0b0f1a);
   color: white;
   text-align: center;
 }
 
-/* HEADER */
 h1 {
   margin: 20px;
   color: #ff3b6b;
 }
 
-/* LOBBY GRID */
 .lobby {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -95,21 +129,13 @@ h1 {
   padding: 20px;
 }
 
-/* GAME CARD */
 .card {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 16px;
   padding: 15px;
-  transition: 0.2s;
 }
 
-.card:hover {
-  transform: scale(1.05);
-  border-color: #00d4ff;
-}
-
-/* BUTTON */
 button {
   width: 100%;
   padding: 10px;
@@ -121,16 +147,16 @@ button {
   font-weight: bold;
 }
 
-/* GAME AREA */
 .hidden { display: none; }
 
 .reels {
-  font-size: 55px;
-  margin: 30px 0;
+  font-size: 45px;
+  margin: 25px 0;
+  line-height: 1.6;
 }
 
 .win {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .bonus {
@@ -143,30 +169,27 @@ button {
 
 <h1>🎰 KWM Casino</h1>
 
-<!-- ================= LOBBY ================= -->
+<!-- LOBBY -->
 <div id="lobby" class="lobby">
 
   <div class="card">
     <h3>🎰 Neon Rodeo</h3>
-    <p>Classic slot machine</p>
     <button onclick="openGame('play')">Play</button>
   </div>
 
   <div class="card">
     <h3>🔥 Fire Link</h3>
-    <p>Bonus fire game</p>
     <button onclick="openGame('firelink')">Play</button>
   </div>
 
   <div class="card">
-    <h3>🐷 Huff & Puff</h3>
-    <p>Bonus building slot</p>
+    <h3>🐂 Huff & Puff</h3>
     <button onclick="openGame('huffpuff')">Play</button>
   </div>
 
 </div>
 
-<!-- ================= GAME ================= -->
+<!-- GAME -->
 <div id="game" class="hidden">
   <h2 id="title"></h2>
 
@@ -192,7 +215,7 @@ function openGame(game) {
   const titles = {
     play: "🎰 Neon Rodeo",
     firelink: "🔥 Fire Link",
-    huffpuff: "🐷 Huff & Puff"
+    huffpuff: "🐂 Huff & Puff"
   };
 
   document.getElementById("title").innerText = titles[game];
@@ -207,7 +230,13 @@ async function spin() {
   const res = await fetch('/' + currentGame, { method: 'POST' });
   const data = await res.json();
 
-  document.getElementById("reels").innerText = data.reels.join(" ");
+  const reelsEl = document.getElementById("reels");
+
+  // GRID RENDER
+  reelsEl.innerHTML = data.reels
+    .map(row => row.join(" "))
+    .join("<br>");
+
   document.getElementById("win").innerText =
     data.win > 0 ? "WIN: " + data.win : "No Win";
 
