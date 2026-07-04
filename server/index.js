@@ -36,6 +36,34 @@ app.post("/play", (req, res) => {
   const win = checkWin(reels);
   const bonus = checkBonus(reels);
 
+ app.get("/play", (req, res) => {
+  const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
+
+  const reels = [
+    symbols[Math.floor(Math.random() * symbols.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+    symbols[Math.floor(Math.random() * symbols.length)]
+  ];
+
+  const win = (reels[0] === reels[1] && reels[1] === reels[2]) ? 50 : 0;
+
+  const fire = reels.filter(s => s === "🔥").length;
+
+  const bonus = {
+    freeSpins: fire >= 2,
+    wheelBonus: fire >= 1
+  };
+
+  res.json({
+    reels,
+    win,
+    bonus,
+    state: "base"
+  });
+}); 
+
+  
+
   res.json({
     reels,
     win,
