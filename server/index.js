@@ -3,7 +3,50 @@ const app = express();
 
 app.use(express.json());
 
-// serve frontend directly
+// ======================
+// SLOT ENGINE
+// ======================
+const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
+
+function spin() {
+  return [
+    symbols[Math.floor(Math.random() * symbols.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+    symbols[Math.floor(Math.random() * symbols.length)]
+  ];
+}
+
+function checkWin(reels) {
+  return (reels[0] === reels[1] && reels[1] === reels[2]) ? 50 : 0;
+}
+
+function checkBonus(reels) {
+  const fire = reels.filter(s => s === "🔥").length;
+
+  return {
+    freeSpins: fire >= 2,
+    wheelBonus: fire >= 1
+  };
+}
+
+// ======================
+// API ROUTE (GAME ENGINE)
+// ======================
+app.post("/play", (req, res) => {
+  const reels = spin();
+  const win = checkWin(reels);
+  const bonus = checkBonus(reels);
+
+  res.json({
+    reels,
+    win,
+    bonus
+  });
+});
+
+// ======================
+// FRONTEND (SINGLE LINK CASINO)
+// ======================
 app.get("/", (req, res) => {
   res.send(`
 <!DOCTYPE html>
@@ -14,39 +57,40 @@ app.get("/", (req, res) => {
 
 <style>
 body {
-  margin:0;
+  margin: 0;
   font-family: Arial;
-  background:#0b0f1a;
-  color:white;
-  text-align:center;
+  background: #0b0f1a;
+  color: white;
+  text-align: center;
 }
 
 .header {
-  font-size:40px;
-  color:#ff004c;
-  margin-top:20px;
+  font-size: 40px;
+  color: #ff004c;
+  margin-top: 20px;
 }
 
 .card {
-  background:#111;
-  margin:20px;
-  padding:20px;
-  border-radius:12px;
-  border:1px solid #333;
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #111;
 }
 
 button {
-  padding:12px 20px;
-  background:#00d4ff;
-  border:none;
-  border-radius:10px;
-  font-size:16px;
-  margin-top:10px;
+  padding: 15px 25px;
+  font-size: 18px;
+  background: #00d4ff;
+  border: none;
+  border-radius: 10px;
+  margin-top: 15px;
 }
 
-.hidden { display:none; }
-
-.reels { font-size:40px; margin:20px; }
+.reels {
+  font-size: 45px;
+  margin: 20px;
+}
 </style>
 </head>
 
@@ -55,10 +99,69 @@ button {
 <div class="header">🎰 KWM Casino</div>
 <p>Neon Texas Edition</p>
 
-<!-- LOBBY -->
-<div id="lobby">
-  <div class="card">
-    <h2>🎰 Neon Rodeo</h2>
+<div class="card">
+  <h2>🎰 Neon Rodeo</h2>
+
+  <div class="reels" id="reels">🎰 🎰 🎰</div>
+
+  <button onclick="spin()">SPIN</button>
+
+  <div id="win"></div>
+  <div id="bonus"></div>
+</div>
+
+<script>
+async function spin() {
+  const reelsEl = document.getElementById("reels");
+  const winEl = document.getElementById("win");
+  const bonusEl = document.getElementById("bonus");
+
+  winEl.innerText = "Spinning...";
+  bonusEl.innerText = "";
+
+  // fake spin animation
+  const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
+
+  let interval = setInterval(() => {
+    reelsEl.innerText = [
+      symbols[Math.floor(Math.random()*symbols.length)],
+      symbols[Math.floor(Math.random()*symbols.length)],
+      symbols[Math.floor(Math.random()*symbols.length)]
+    ].join(" ");
+  }, 80);
+
+  setTimeout(async () => {
+    clearInterval(interval);
+
+    const res = await fetch('/play', { method: 'POST' });
+    const data = await res.json();
+
+    reelsEl.innerText = data.reels.join(" ");
+
+    winEl.innerText = data.win > 0 ? "WIN: " + data.win : "No Win";
+
+    if (data.bonus.freeSpins) {
+      bonusEl.innerText = "🔥 FREE SPINS!";
+    } else if (data.bonus.wheelBonus) {
+      bonusEl.innerText = "🎡 BONUS!";
+    }
+
+  }, 1200);
+}
+</script>
+
+</body>
+</html>
+  `);
+});
+
+// ======================
+// START SERVER
+// ======================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("KWM Casino running on port", PORT);
+});    <h2>🎰 Neon Rodeo</h2>
     <p>Classic slot machine</p>
     <button onclick="openGame()">Play</button>
   </div>
