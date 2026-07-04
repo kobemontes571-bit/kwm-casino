@@ -284,24 +284,6 @@ async function spin() {
   }, 1400);
 }
 
-  const reelsEl = document.getElementById("reels");
-
-  // GRID RENDER
-  reelsEl.innerHTML = data.reels
-    .map(row => row.join(" "))
-    .join("<br>");
-
-  document.getElementById("win").innerText =
-    data.win > 0 ? "WIN: " + data.win : "No Win";
-
-  if (data.bonus.freeSpins) {
-    document.getElementById("bonus").innerText = "🔥 FREE SPINS!";
-  } else if (data.bonus.wheelBonus) {
-    document.getElementById("bonus").innerText = "🎡 BONUS!";
-  } else {
-    document.getElementById("bonus").innerText = "";
-  }
-}
 </script>
 
 </body>
