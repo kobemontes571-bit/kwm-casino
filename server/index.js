@@ -47,19 +47,38 @@ app.get("/", (req, res) => {
 
 <script>
 async function spin() {
+  document.getElementById("win").innerText = "Spinning...";
+  document.getElementById("bonus").innerText = "";
+  document.getElementById("reels").innerText = "🎰 🎰 🎰";
+
+  await new Promise(r => setTimeout(r, 800));
+
   const res = await fetch('/play', { method: 'POST' });
   const data = await res.json();
 
-  document.getElementById("reels").innerText = data.reels.join(" ");
-  document.getElementById("win").innerText = "Win: " + data.win;
+  let frames = ["🎰 🎰 🎰", "⭐ 🔥 💎", "7 🔔 ⭐"];
+  let i = 0;
 
-  if (data.bonus.freeSpins) {
-    document.getElementById("bonus").innerText = "🔥 FREE SPINS!";
-  } else if (data.bonus.wheelBonus) {
-    document.getElementById("bonus").innerText = "🎡 WHEEL BONUS!";
-  } else {
-    document.getElementById("bonus").innerText = "";
-  }
+  let interval = setInterval(() => {
+    document.getElementById("reels").innerText = frames[i % frames.length];
+    i++;
+  }, 100);
+
+  setTimeout(() => {
+    clearInterval(interval);
+
+    document.getElementById("reels").innerText = data.reels.join(" ");
+
+    document.getElementById("win").innerText =
+      data.win > 0 ? "WIN: " + data.win : "No Win";
+
+    if (data.bonus.freeSpins) {
+      document.getElementById("bonus").innerText = "🔥 FREE SPINS TRIGGERED!";
+    } else if (data.bonus.wheelBonus) {
+      document.getElementById("bonus").innerText = "🎡 WHEEL BONUS!";
+    }
+
+  }, 900);
 }
 </script>
 
