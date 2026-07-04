@@ -51,51 +51,41 @@ async function spin() {
   const winEl = document.getElementById("win");
   const bonusEl = document.getElementById("bonus");
 
+  if (!reelsEl || !winEl || !bonusEl) {
+    alert("Missing UI elements");
+    return;
+  }
+
   winEl.innerText = "Spinning...";
   bonusEl.innerText = "";
 
-  // fake reel animation
-  const symbols = ["⭐","🔔","💎","7","🔥","🐂"];
-
-  let spinCount = 0;
-
-  let interval = setInterval(() => {
-    reelsEl.innerText = [
-      symbols[Math.floor(Math.random()*symbols.length)],
-      symbols[Math.floor(Math.random()*symbols.length)],
-      symbols[Math.floor(Math.random()*symbols.length)]
-    ].join(" ");
-  }, 80);
-
-  // stop reels after delay
-  setTimeout(async () => {
-    clearInterval(interval);
+  try {
+    reelsEl.innerText = "🎰 🎰 🎰";
 
     const res = await fetch('/play', { method: 'POST' });
+
+    if (!res.ok) {
+      throw new Error("Server error: " + res.status);
+    }
+
     const data = await res.json();
 
-    // slow reveal effect
-    reelsEl.innerText = "🎰";
-    await new Promise(r => setTimeout(r, 400));
+    reelsEl.innerText = data.reels ? data.reels.join(" ") : "ERROR";
 
-    reelsEl.innerText = data.reels.join(" ");
+    winEl.innerText = data.win > 0 ? "WIN: " + data.win : "No Win";
 
-    if (data.win > 0) {
-      winEl.innerText = "🔥 BIG WIN: " + data.win;
-      document.body.style.background = "#1a0b0b";
-      setTimeout(() => document.body.style.background = "#0b0f1a", 600);
-    } else {
-      winEl.innerText = "No Win";
+    if (data.bonus?.freeSpins) {
+      bonusEl.innerText = "🔥 FREE SPINS!";
+    } else if (data.bonus?.wheelBonus) {
+      bonusEl.innerText = "🎡 BONUS!";
     }
 
-    if (data.bonus.freeSpins) {
-      bonusEl.innerText = "🔥 FREE SPINS MODE!";
-    } else if (data.bonus.wheelBonus) {
-      bonusEl.innerText = "🎡 WHEEL BONUS TRIGGERED!";
-    }
-
-  }, 1200);
+  } catch (err) {
+    console.log(err);
+    winEl.innerText = "Connection Error";
+  }
 }
+</script>
 
 </body>
 </html>
